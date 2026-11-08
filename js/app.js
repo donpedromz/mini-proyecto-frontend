@@ -96,51 +96,38 @@ function bindActions() {
   });
 }
 
-function bindDragAndDrop() {
-  let drag = null;
-
-  const isOverDropZone = (event) => {
-    const rect = elements.selected.getBoundingClientRect();
-    return (
-      event.clientX > rect.left &&
-      event.clientX < rect.right &&
-      event.clientY > rect.top &&
-      event.clientY < rect.bottom
-    );
-  };
-
-  document.addEventListener("pointerdown", (event) => {
-    const handle = event.target.closest(".drag-handle");
-    if (!handle || handle.closest("#selected-list")) return;
-
-    const card = handle.closest(".place-card");
-    if (!card) return;
-
-    const ghost = card.cloneNode(true);
-    ghost.classList.add("drag-ghost");
-    document.body.appendChild(ghost);
-    drag = { id: handle.dataset.id, ghost };
-    moveGhost(event);
-    event.preventDefault();
-  });
-
-  function moveGhost(event) {
-    if (!drag) return;
-    drag.ghost.style.left = `${event.clientX - 30}px`;
-    drag.ghost.style.top = `${event.clientY - 20}px`;
-    const over = isOverDropZone(event);
-    elements.selected.classList.toggle("over", over);
-    drag.over = over;
+function bindSortable() {
+  const Sortable = window.Sortable;
+  if (!Sortable) {
+    setStatus(elements.status, "No se pudo cargar el arrastre (SortableJS).");
+    return;
   }
 
-  document.addEventListener("pointermove", moveGhost);
-  document.addEventListener("pointerup", () => {
-    if (!drag) return;
-    if (drag.over) addSelection(drag.id);
-    drag.ghost.remove();
-    elements.selected.classList.remove("over");
-    drag = null;
-    refresh();
+  const clearOver = () => elements.selected.classList.remove("over");
+
+  Sortable.create(elements.list, {
+    group: { name: "places", pull: "clone", put: false },
+    sort: false,
+    handle: ".drag-handle",
+    draggable: ".place-card",
+    onMove: clearOver,
+    onEnd: clearOver,
+  });
+
+  Sortable.create(elements.selected, {
+    group: { name: "places", pull: false, put: true },
+    sort: false,
+    handle: ".drag-handle",
+    draggable: ".place-card",
+    onMove: (event) => {
+      elements.selected.classList.toggle("over", event.to === elements.selected);
+    },
+    onAdd: (event) => {
+      addSelection(event.item.dataset.id);
+      clearOver();
+      requestAnimationFrame(refresh);
+    },
+    onEnd: clearOver,
   });
 }
 
@@ -149,7 +136,7 @@ function init() {
   generatePlaces();
   refresh();
   bindActions();
-  bindDragAndDrop();
+  bindSortable();
   map.start();
   setStatus(elements.status, "Ubicación de ejemplo. Pulsa “Mi ubicación” para usar la real.");
 }

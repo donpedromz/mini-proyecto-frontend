@@ -206,13 +206,20 @@ button.primary {
   padding: 4px 9px;
 }
 
-.drag-ghost {
-  position: fixed;
-  z-index: 50;
-  pointer-events: none;
-  opacity: 0.9;
+.sortable-ghost {
+  opacity: 0.45;
+  border-style: dashed;
+  border-color: var(--sel);
+  background: color-mix(in srgb, var(--sel) 8%, var(--card));
+}
+
+.sortable-chosen {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.sortable-drag {
+  opacity: 0.95;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  width: 260px;
 }
 
 #status {

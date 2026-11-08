@@ -4,6 +4,7 @@ import { availablePlaces, distanceMeters, getState } from "./data.js";
 function createPlaceCard(place, action) {
   const card = document.createElement("div");
   card.className = "place-card";
+  card.dataset.id = place.id;
   card.innerHTML = `
     <span class="drag-handle" data-id="${place.id}" aria-label="Arrastrar ${place.name}">⠿</span>
     <span class="icon" aria-hidden="true">${CATEGORY_ICONS[place.cat] || "📍"}</span>
