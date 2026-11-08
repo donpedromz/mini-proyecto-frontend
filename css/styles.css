@@ -1,0 +1,223 @@
+:root {
+  --bg: #f4f1ea;
+  --card: #fff;
+  --ink: #1f2a2e;
+  --mut: #6b7780;
+  --line: #ddd8cc;
+  --acc: #e0533d;
+  --me: #2b6cf0;
+  --map: #ece7da;
+  --park: #cfe3c4;
+  --water: #bcd9ea;
+  --road: #fff;
+  --sel: #1f9d6b;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15191b;
+    --card: #1f2528;
+    --ink: #e8ecee;
+    --mut: #8f9ba2;
+    --line: #333c40;
+    --acc: #ff7a63;
+    --me: #6ea0ff;
+    --map: #252b2d;
+    --park: #2c3d2c;
+    --water: #243a48;
+    --road: #343c3f;
+    --sel: #3ec28e;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #15191b;
+  --card: #1f2528;
+  --ink: #e8ecee;
+  --mut: #8f9ba2;
+  --line: #333c40;
+  --acc: #ff7a63;
+  --me: #6ea0ff;
+  --map: #252b2d;
+  --park: #2c3d2c;
+  --water: #243a48;
+  --road: #343c3f;
+  --sel: #3ec28e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0 0 2px;
+}
+
+.subtitle {
+  color: var(--mut);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+button {
+  font: inherit;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: #fff;
+}
+
+#map-canvas {
+  width: 100%;
+  height: 320px;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--map);
+  touch-action: manipulation;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#selected-list {
+  min-height: 120px;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: 0.15s;
+}
+
+#selected-list.over {
+  border-color: var(--sel);
+  background: color-mix(in srgb, var(--sel) 10%, transparent);
+}
+
+.empty-state {
+  color: var(--mut);
+  text-align: center;
+  padding: 28px 8px;
+  font-size: 13px;
+}
+
+.place-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.place-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.place-card .icon {
+  font-size: 22px;
+}
+
+.place-card .text {
+  flex: 1;
+  min-width: 0;
+}
+
+.place-card b {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-card small {
+  color: var(--mut);
+}
+
+.drag-handle {
+  touch-action: none;
+  cursor: grab;
+  color: var(--mut);
+  padding: 6px;
+  user-select: none;
+  font-size: 18px;
+}
+
+.place-card button {
+  padding: 4px 9px;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  width: 260px;
+}
+
+#status {
+  color: var(--mut);
+  font-size: 13px;
+  margin: 8px 0 0;
+  min-height: 18px;
+}

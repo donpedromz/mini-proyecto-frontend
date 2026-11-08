@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Lugares cercanos</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Lugares cercanos</h1>
+      <p class="subtitle">Arrastra desde el asa ⠿ (o pulsa +) hacia “Mis seleccionados”.</p>
+
+      <div class="toolbar" aria-label="Acciones">
+        <button id="locate-btn" type="button">📍 Mi ubicación</button>
+        <button id="save-btn" class="primary" type="button">💾 Guardar selección</button>
+        <button id="clear-btn" type="button">Vaciar</button>
+      </div>
+
+      <canvas id="map-canvas" aria-label="Mapa de lugares cercanos"></canvas>
+      <p id="status" role="status" aria-live="polite"></p>
+
+      <div class="columns">
+        <section class="column" aria-labelledby="nearby-title">
+          <h2 id="nearby-title">Cerca de ti</h2>
+          <div id="nearby-list" class="place-list"></div>
+        </section>
+
+        <section class="column" aria-labelledby="selected-title">
+          <h2 id="selected-title">Mis seleccionados</h2>
+          <div id="selected-list"></div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
