@@ -91,30 +91,12 @@ async function locateUser() {
 }
 
 /**
- * Evalúa las reglas de recomendación meteorológica al agregar un lugar.
- * @param {string} id - Identificador del lugar añadido.
+ * Avisa que un lugar se agregó a la selección.
+ * @param {string} id - Identificador del lugar.
  */
-function checkWeatherRules(id) {
+function notifyAdded(id) {
   const place = findPlace(id);
-  if (!place || !currentWeather) return;
-
-  if (currentWeather.isRaining) {
-    if (place.outdoor) {
-      setStatus(
-        elements.status,
-        `⚠️ Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`,
-      );
-    } else {
-      setStatus(
-        elements.status,
-        `✅ ${place.name} es un espacio techado ideal para resguardarse de la lluvia.`,
-      );
-    }
-  } else if (!place.outdoor) {
-    setStatus(elements.status, `${place.name} agregado a tu selección.`);
-  } else {
-    setStatus(elements.status, `☀️ Buen clima para disfrutar ${place.name} al aire libre.`);
-  }
+  if (place) setStatus(elements.status, `${place.name} agregado a tu selección.`);
 }
 
 /** Carga el estado del clima real de Manizales. */
@@ -153,7 +135,7 @@ function bindActions() {
     const { action, id } = button.dataset;
     if (action === "add") {
       if (addSelection(id)) {
-        checkWeatherRules(id);
+        notifyAdded(id);
       }
     }
     if (action === "remove") removeSelection(id);
@@ -178,7 +160,7 @@ function bindDragAndDrop() {
     targetContainer: elements.selected,
     onDrop: (id) => {
       if (addSelection(id)) {
-        checkWeatherRules(id);
+        notifyAdded(id);
         refresh();
       }
     },

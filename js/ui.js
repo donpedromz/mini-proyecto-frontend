@@ -40,17 +40,12 @@ export function createPlaceCard(place, action) {
   const isAdd = action === "add";
   const actionLabel = isAdd ? `Agregar ${place.name}` : `Quitar ${place.name}`;
   const actionSymbol = isAdd ? "+" : "×";
-  const isOutdoor = place.outdoor !== false;
-  const envBadge = `<span class="env-badge ${isOutdoor ? "env-outdoor" : "env-indoor"}" title="${isOutdoor ? "Lugar al aire libre" : "Lugar techado"}">${isOutdoor ? "🌧️ Aire libre" : "🏛️ Techado"}</span>`;
 
   card.innerHTML = `
     <span class="drag-handle" data-id="${place.id}" aria-label="Arrastrar ${place.name}">⠿</span>
     <span class="icon" aria-hidden="true"><i data-lucide="${iconName}"></i></span>
     <div class="text">
-      <div class="title-row">
-        <b>${place.name}</b>
-        ${envBadge}
-      </div>
+      <b>${place.name}</b>
       <small>${formatDistance(place)}</small>
     </div>
     <button type="button" data-action="${action}" data-id="${place.id}" aria-label="${actionLabel}">${actionSymbol}</button>
