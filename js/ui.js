@@ -41,7 +41,10 @@ export function createPlaceCard(place, action) {
   const actionLabel = isAdd ? `Agregar ${place.name}` : `Quitar ${place.name}`;
   const actionSymbol = isAdd ? "+" : "×";
   const isOutdoor = place.outdoor !== false;
-  const envBadge = `<span class="env-badge ${isOutdoor ? "env-outdoor" : "env-indoor"}" title="${isOutdoor ? "Lugar al aire libre" : "Lugar techado"}">${isOutdoor ? "🌧️ Aire libre" : "🏛️ Techado"}</span>`;
+  const envIcon = isOutdoor ? "tree-pine" : "building-2";
+  const envLabel = isOutdoor ? "Aire libre" : "Techado";
+  const envTitle = isOutdoor ? "Lugar al aire libre" : "Lugar techado";
+  const envBadge = `<span class="env-badge ${isOutdoor ? "env-outdoor" : "env-indoor"}" title="${envTitle}"><i data-lucide="${envIcon}"></i>${envLabel}</span>`;
 
   card.innerHTML = `
     <span class="drag-handle" data-id="${place.id}" aria-label="Arrastrar ${place.name}">⠿</span>
@@ -115,14 +118,20 @@ export function setStatus(statusElement, message, type = "info") {
 }
 
 /**
- * Actualiza la información del clima en la barra de herramientas.
- * @param {{temperature: number, isRaining: boolean, description: string, emoji: string}} weather
+ * Actualiza el icono y el texto del clima en la barra de herramientas.
+ * @param {{temperature: number, description: string, icon: string}} weather - Datos del clima.
  */
 export function updateWeatherUI(weather) {
+  const button = document.querySelector("#weather-btn");
   const icon = document.querySelector("#weather-icon");
   const text = document.querySelector("#weather-text");
-  if (icon && text && weather) {
-    icon.textContent = weather.emoji;
-    text.textContent = `${weather.temperature}°C • ${weather.description}`;
-  }
+  if (!button || !icon || !text || !weather) return;
+
+  icon.innerHTML = `<i data-lucide="${weather.icon}"></i>`;
+  renderIcons(icon);
+  text.textContent = `${weather.temperature}°C • ${weather.description}`;
+
+  const label = `Clima en Manizales: ${weather.description}, ${weather.temperature}°C`;
+  button.setAttribute("aria-label", label);
+  button.title = label;
 }

@@ -331,10 +331,7 @@ export function createMap(canvas, { onSelectPlace } = {}) {
 
     const occupied = [];
     toDraw.forEach(({ place, x, y, selected, hovered }) => {
-      const displayName = weather?.isRaining
-        ? (place.outdoor ? `🌧️ ${place.name}` : `🏛️ ${place.name}`)
-        : place.name;
-      const labelWidth = ctx.measureText(displayName).width + 14;
+      const labelWidth = ctx.measureText(place.name).width + 14;
       const labelHeight = 20;
       const labelX = Math.min(Math.max(x - labelWidth / 2, 4), width - labelWidth - 4);
       const aboveY = y - 24;
@@ -351,7 +348,7 @@ export function createMap(canvas, { onSelectPlace } = {}) {
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = cssVar("--ink");
-      ctx.fillText(displayName, labelX + 7, labelY);
+      ctx.fillText(place.name, labelX + 7, labelY);
     });
 
     return nextPoints;

@@ -10,6 +10,7 @@ import {
   setSelection,
   toggleSelection,
 } from "./data.js";
+import { Place } from "./entities/Place.js";
 import { getCurrentPosition } from "./services/locationService.js";
 import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
@@ -48,7 +49,7 @@ function refresh() {
 function loadSavedSelection() {
   const saved = getStoredItem(STORAGE_KEY, null);
   if (Array.isArray(saved)) {
-    setSelection(saved);
+    setSelection(saved.map((place) => Place.from(place)).filter(Boolean));
   } else if (saved !== null) {
     setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
   }
@@ -102,18 +103,18 @@ function checkWeatherRules(id) {
     if (place.outdoor) {
       setStatus(
         elements.status,
-        `⚠️ Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`,
+        `Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`,
       );
     } else {
       setStatus(
         elements.status,
-        `✅ ${place.name} es un espacio techado ideal para resguardarse de la lluvia.`,
+        `${place.name} es un espacio techado ideal para resguardarse de la lluvia.`,
       );
     }
   } else if (!place.outdoor) {
     setStatus(elements.status, `${place.name} agregado a tu selección.`);
   } else {
-    setStatus(elements.status, `☀️ Buen clima para disfrutar ${place.name} al aire libre.`);
+    setStatus(elements.status, `Buen clima para disfrutar ${place.name} al aire libre.`);
   }
 }
 
@@ -133,7 +134,7 @@ function toggleWeatherSimulation() {
     isRaining: isRainingNow,
     temperature: isRainingNow ? 15 : 21,
     description: isRainingNow ? "Lluvia simulada" : "Soleado simulado",
-    emoji: isRainingNow ? "🌧️" : "☀️",
+    icon: isRainingNow ? "cloud-rain" : "sun",
   };
   updateWeatherUI(currentWeather);
   map.setWeather?.(currentWeather);
