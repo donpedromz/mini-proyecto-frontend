@@ -22,6 +22,7 @@ function normalizePlace(place) {
     id: place.id,
     name: place.name,
     category: typeof place.category === "string" ? place.category : "turismo",
+    outdoor: typeof place.outdoor === "boolean" ? place.outdoor : true,
     lat: place.lat,
     lon: place.lon,
     source: place.source || "seed",
