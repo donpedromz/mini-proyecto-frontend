@@ -1,14 +1,17 @@
-import { GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
+import { CITY, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
   clearSelection,
-  generatePlaces,
   getState,
   removeSelection,
+  setPlaces,
+  setReferenceLocation,
   setSelection,
-  setUserLocation,
   toggleSelection,
 } from "./data.js";
+import { getCurrentPosition } from "./services/locationService.js";
+import { getAll } from "./services/placesService.js";
+import { renderIcons } from "./services/icons.js";
 import { createMap } from "./map.js";
 import { renderPlaces, setStatus } from "./ui.js";
 
@@ -22,12 +25,19 @@ const elements = {
   clear: document.querySelector("#clear-btn"),
 };
 
-const map = createMap(elements.canvas);
+const map = createMap(elements.canvas, {
+  onSelectPlace: (place) => {
+    toggleSelection(place.id);
+    refresh();
+  },
+});
 
+/** Vuelve a pintar las listas de lugares. */
 function refresh() {
   renderPlaces(elements.list, elements.selected);
 }
 
+/** Carga la selección guardada en el navegador. */
 function loadSavedSelection() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -35,42 +45,47 @@ function loadSavedSelection() {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) setSelection(parsed);
   } catch {
-    // Ignorar datos inválidos o acceso bloqueado a localStorage.
+    setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
   }
 }
 
+/** Guarda la selección actual en el navegador. */
 function saveSelection() {
   try {
     const { selected } = getState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
     setStatus(elements.status, `Selección guardada (${selected.length})`);
   } catch {
-    setStatus(elements.status, "No se pudo guardar en este navegador");
+    setStatus(elements.status, "No se pudo guardar en este navegador", "error");
   }
 }
 
-function locateUser() {
-  if (!navigator.geolocation) {
-    setStatus(elements.status, "Geolocalización no disponible; usando ubicación de ejemplo.");
-    return;
-  }
+/** Carga el catálogo de lugares y fija el centro de la ciudad. */
+async function loadPlaces() {
+  setStatus(elements.status, `Cargando puntos de ${CITY.label}…`);
+  const { places, center, meta } = await getAll();
+  setPlaces(places);
+  setReferenceLocation(center.lat, center.lon, false);
+  refresh();
+  void meta;
+  setStatus(elements.status, "");
+}
 
+/** Pide la ubicación al navegador y centra el mapa en ella. */
+async function locateUser() {
   setStatus(elements.status, "Buscando tu ubicación…");
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      setUserLocation(position.coords.latitude, position.coords.longitude, true);
-      generatePlaces();
-      refresh();
-      setStatus(
-        elements.status,
-        `Ubicación real detectada (±${Math.round(position.coords.accuracy)} m)`,
-      );
-    },
-    () => setStatus(elements.status, "No se pudo obtener tu ubicación; usando una de ejemplo."),
-    { timeout: GEO_TIMEOUT_MS },
-  );
+  try {
+    const position = await getCurrentPosition({ timeout: GEO_TIMEOUT_MS });
+    setReferenceLocation(position.lat, position.lon, true);
+    map.recenter(position.lat, position.lon);
+    refresh();
+    setStatus(elements.status, "");
+  } catch (error) {
+    setStatus(elements.status, `No se pudo obtener tu ubicación: ${error.message}`, "error");
+  }
 }
 
+/** Conecta los botones de la barra de acciones. */
 function bindActions() {
   document.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
@@ -86,19 +101,21 @@ function bindActions() {
     clearSelection();
     refresh();
   });
-  elements.locate.addEventListener("click", locateUser);
-
-  elements.canvas.addEventListener("click", (event) => {
-    const hit = map.hitTest(event.clientX, event.clientY);
-    if (!hit) return;
-    toggleSelection(hit.place.id);
-    refresh();
+  elements.locate.addEventListener("click", () => {
+    locateUser();
   });
+
 }
 
+/** Permite arrastrar lugares de la lista al panel de seleccionados. */
 function bindDragAndDrop() {
   let drag = null;
 
+  /**
+   * Indica si el puntero está sobre el panel de seleccionados.
+   * @param {PointerEvent} event - Evento del puntero.
+   * @returns {boolean} true si está dentro de la zona.
+   */
   const isOverDropZone = (event) => {
     const rect = elements.selected.getBoundingClientRect();
     return (
@@ -124,6 +141,7 @@ function bindDragAndDrop() {
     event.preventDefault();
   });
 
+  /** Mueve la tarjeta fantasma y resalta la zona de destino. */
   function moveGhost(event) {
     if (!drag) return;
     drag.ghost.style.left = `${event.clientX - 30}px`;
@@ -144,14 +162,20 @@ function bindDragAndDrop() {
   });
 }
 
-function init() {
+/** Arranca la aplicación y carga los datos iniciales. */
+async function init() {
+  renderIcons(document);
   loadSavedSelection();
-  generatePlaces();
   refresh();
   bindActions();
   bindDragAndDrop();
   map.start();
-  setStatus(elements.status, "Ubicación de ejemplo. Pulsa “Mi ubicación” para usar la real.");
+
+  try {
+    await loadPlaces();
+  } catch (error) {
+    setStatus(elements.status, `No se pudieron cargar los lugares: ${error.message}`, "error");
+  }
 }
 
 init();
