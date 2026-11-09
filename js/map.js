@@ -53,6 +53,7 @@ export function createMap(canvas, { onSelectPlace } = {}) {
   let animationId = null;
   let hoveredId = null;
   let view = null;
+  let weather = null;
   let suppressNextClick = false;
 
   const drag = { active: false, pointerId: null, startX: 0, startY: 0, moved: false };
@@ -101,6 +102,7 @@ export function createMap(canvas, { onSelectPlace } = {}) {
     drawTileLayer(ctx, currentView, width, height);
     points = drawPlaces(ctx, currentView, width, height);
     drawUserMarker(ctx, width, height);
+    drawWeatherWidget(ctx, width, height);
   }
 
   /** Dibuja el mapa en cada frame de animación. */
@@ -329,7 +331,10 @@ export function createMap(canvas, { onSelectPlace } = {}) {
 
     const occupied = [];
     toDraw.forEach(({ place, x, y, selected, hovered }) => {
-      const labelWidth = ctx.measureText(place.name).width + 14;
+      const displayName = weather?.isRaining
+        ? (place.outdoor ? `🌧️ ${place.name}` : `🏛️ ${place.name}`)
+        : place.name;
+      const labelWidth = ctx.measureText(displayName).width + 14;
       const labelHeight = 20;
       const labelX = Math.min(Math.max(x - labelWidth / 2, 4), width - labelWidth - 4);
       const aboveY = y - 24;
@@ -346,10 +351,95 @@ export function createMap(canvas, { onSelectPlace } = {}) {
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = cssVar("--ink");
-      ctx.fillText(place.name, labelX + 7, labelY);
+      ctx.fillText(displayName, labelX + 7, labelY);
     });
 
     return nextPoints;
+  }
+
+  /**
+   * Dibuja el widget meteorológico animado (nube con lluvia o sol) sobre el canvas.
+   * @param {CanvasRenderingContext2D} ctx - Contexto de renderizado.
+   * @param {number} width - Ancho del canvas.
+   * @param {number} height - Alto del canvas.
+   */
+  function drawWeatherWidget(ctx, width, height) {
+    if (!weather) return;
+
+    const now = Date.now();
+
+    // Gotas de lluvia diagonales sobre el mapa si llueve
+    if (weather.isRaining) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(74, 144, 226, 0.35)";
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = "round";
+      const dropCount = 35;
+      for (let i = 0; i < dropCount; i += 1) {
+        const x = ((i * 47 + now * 0.12) % (width + 60)) - 30;
+        const y = ((i * 83 + now * 0.35) % (height + 40)) - 20;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - 3, y + 10);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Dibujar la nubecita estilizada en la esquina superior derecha del mapa
+    const cloudX = width - 42;
+    const cloudY = 28;
+    const floatOffset = Math.sin(now / 700) * 2.5;
+
+    ctx.save();
+    ctx.translate(cloudX, cloudY + floatOffset);
+
+    if (weather.isRaining) {
+      // Gotitas cayendo de la nube
+      ctx.strokeStyle = "rgba(43, 108, 240, 0.75)";
+      ctx.lineWidth = 1.6;
+      for (let i = -10; i <= 10; i += 7) {
+        const dropProgress = ((now + i * 150) % 700) / 700;
+        const dropY = 10 + dropProgress * 10;
+        ctx.beginPath();
+        ctx.moveTo(i - 1, dropY);
+        ctx.lineTo(i - 2, dropY + 4);
+        ctx.stroke();
+      }
+
+      // Nube vectorizada
+      ctx.fillStyle = "rgba(180, 195, 210, 0.95)";
+      ctx.beginPath();
+      ctx.arc(-8, 0, 8, 0, Math.PI * 2);
+      ctx.arc(4, -3, 10, 0, Math.PI * 2);
+      ctx.arc(14, 1, 7, 0, Math.PI * 2);
+      ctx.arc(0, 3, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    } else {
+      // Sol radiante estilizado
+      const pulse = (Math.sin(now / 500) + 1) * 1.2;
+      ctx.fillStyle = "rgba(255, 180, 0, 0.95)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 9 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255, 195, 0, 0.8)";
+      ctx.lineWidth = 1.8;
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+        const r1 = 12 + pulse;
+        const r2 = 16 + pulse;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+        ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
   }
 
   /**
@@ -380,5 +470,16 @@ export function createMap(canvas, { onSelectPlace } = {}) {
     ctx.stroke();
   }
 
-  return { start, stop, draw, hitTest, recenter, setHover: updateHover, clearHover };
+  return {
+    start,
+    stop,
+    draw,
+    hitTest,
+    recenter,
+    setHover: updateHover,
+    clearHover,
+    setWeather: (next) => {
+      weather = next;
+    },
+  };
 }
