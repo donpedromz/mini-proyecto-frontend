@@ -1,3 +1,4 @@
+import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm";
 import { CITY, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
@@ -108,57 +109,32 @@ function bindActions() {
 }
 
 /** Permite arrastrar lugares de la lista al panel de seleccionados. */
-function bindDragAndDrop() {
-  let drag = null;
+function bindSortable() {
+  const clearOver = () => elements.selected.classList.remove("over");
 
-  /**
-   * Indica si el puntero está sobre el panel de seleccionados.
-   * @param {PointerEvent} event - Evento del puntero.
-   * @returns {boolean} true si está dentro de la zona.
-   */
-  const isOverDropZone = (event) => {
-    const rect = elements.selected.getBoundingClientRect();
-    return (
-      event.clientX > rect.left &&
-      event.clientX < rect.right &&
-      event.clientY > rect.top &&
-      event.clientY < rect.bottom
-    );
-  };
-
-  document.addEventListener("pointerdown", (event) => {
-    const handle = event.target.closest(".drag-handle");
-    if (!handle || handle.closest("#selected-list")) return;
-
-    const card = handle.closest(".place-card");
-    if (!card) return;
-
-    const ghost = card.cloneNode(true);
-    ghost.classList.add("drag-ghost");
-    document.body.appendChild(ghost);
-    drag = { id: handle.dataset.id, ghost };
-    moveGhost(event);
-    event.preventDefault();
+  Sortable.create(elements.list, {
+    group: { name: "places", pull: "clone", put: false },
+    sort: false,
+    handle: ".drag-handle",
+    draggable: ".place-card",
+    onMove: clearOver,
+    onEnd: clearOver,
   });
 
-  /** Mueve la tarjeta fantasma y resalta la zona de destino. */
-  function moveGhost(event) {
-    if (!drag) return;
-    drag.ghost.style.left = `${event.clientX - 30}px`;
-    drag.ghost.style.top = `${event.clientY - 20}px`;
-    const over = isOverDropZone(event);
-    elements.selected.classList.toggle("over", over);
-    drag.over = over;
-  }
-
-  document.addEventListener("pointermove", moveGhost);
-  document.addEventListener("pointerup", () => {
-    if (!drag) return;
-    if (drag.over) addSelection(drag.id);
-    drag.ghost.remove();
-    elements.selected.classList.remove("over");
-    drag = null;
-    refresh();
+  Sortable.create(elements.selected, {
+    group: { name: "places", pull: false, put: true },
+    sort: false,
+    handle: ".drag-handle",
+    draggable: ".place-card",
+    onMove: (event) => {
+      elements.selected.classList.toggle("over", event.to === elements.selected);
+    },
+    onAdd: (event) => {
+      addSelection(event.item.dataset.id);
+      clearOver();
+      requestAnimationFrame(refresh);
+    },
+    onEnd: clearOver,
   });
 }
 
@@ -168,7 +144,7 @@ async function init() {
   loadSavedSelection();
   refresh();
   bindActions();
-  bindDragAndDrop();
+  bindSortable();
   map.start();
 
   try {
