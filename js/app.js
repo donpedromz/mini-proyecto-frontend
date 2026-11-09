@@ -92,7 +92,7 @@ async function locateUser() {
  */
 function notifyAdded(id) {
   const place = findPlace(id);
-  if (place) setStatus(elements.status, `${place.name} agregado a tu selección.`);
+  if (place) setStatus(elements.status, `${place.name} se agregó a tu selección.`);
 }
 
 /** Conecta los botones de la barra de acciones. */
