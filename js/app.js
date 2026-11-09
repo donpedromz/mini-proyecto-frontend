@@ -1,4 +1,3 @@
-import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm";
 import { CITY, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
@@ -15,6 +14,8 @@ import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
 import { createMap } from "./map.js";
 import { renderPlaces, setStatus } from "./ui.js";
+import { getStoredItem, setStoredItem } from "./services/storageService.js";
+import { setupDragAndDrop } from "./services/dragDropService.js";
 
 const elements = {
   canvas: document.querySelector("#map-canvas"),
@@ -40,23 +41,21 @@ function refresh() {
 
 /** Carga la selección guardada en el navegador. */
 function loadSavedSelection() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) setSelection(parsed);
-  } catch {
+  const saved = getStoredItem(STORAGE_KEY, null);
+  if (Array.isArray(saved)) {
+    setSelection(saved);
+  } else if (saved !== null) {
     setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
   }
 }
 
 /** Guarda la selección actual en el navegador. */
 function saveSelection() {
-  try {
-    const { selected } = getState();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
+  const { selected } = getState();
+  const saved = setStoredItem(STORAGE_KEY, selected);
+  if (saved) {
     setStatus(elements.status, `Selección guardada (${selected.length})`);
-  } catch {
+  } else {
     setStatus(elements.status, "No se pudo guardar en este navegador", "error");
   }
 }
@@ -108,33 +107,16 @@ function bindActions() {
 
 }
 
-/** Permite arrastrar lugares de la lista al panel de seleccionados. */
-function bindSortable() {
-  const clearOver = () => elements.selected.classList.remove("over");
-
-  Sortable.create(elements.list, {
-    group: { name: "places", pull: "clone", put: false },
-    sort: false,
-    handle: ".drag-handle",
-    draggable: ".place-card",
-    onMove: clearOver,
-    onEnd: clearOver,
-  });
-
-  Sortable.create(elements.selected, {
-    group: { name: "places", pull: false, put: true },
-    sort: false,
-    handle: ".drag-handle",
-    draggable: ".place-card",
-    onMove: (event) => {
-      elements.selected.classList.toggle("over", event.to === elements.selected);
+/** Conecta la interacción de arrastrar y soltar nativa entre las listas. */
+function bindDragAndDrop() {
+  setupDragAndDrop({
+    sourceContainer: elements.list,
+    targetContainer: elements.selected,
+    onDrop: (id) => {
+      if (addSelection(id)) {
+        refresh();
+      }
     },
-    onAdd: (event) => {
-      addSelection(event.item.dataset.id);
-      clearOver();
-      requestAnimationFrame(refresh);
-    },
-    onEnd: clearOver,
   });
 }
 
@@ -144,7 +126,7 @@ async function init() {
   loadSavedSelection();
   refresh();
   bindActions();
-  bindSortable();
+  bindDragAndDrop();
   map.start();
 
   try {
