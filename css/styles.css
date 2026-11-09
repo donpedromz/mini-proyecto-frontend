@@ -316,18 +316,6 @@ button.primary {
   color: inherit;
 }
 
-.weather-toggle {
-  margin-left: auto;
-  font-weight: 500;
-  background: var(--card);
-  border: 1px solid var(--line);
-  transition: transform 0.15s ease, background-color 0.2s ease;
-}
-
-.weather-toggle:hover {
-  transform: translateY(-1px);
-}
-
 .brand-credit {
   color: var(--mut);
   font-size: 12px;

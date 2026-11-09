@@ -14,12 +14,9 @@ import { getCurrentPosition } from "./services/locationService.js";
 import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
 import { createMap } from "./map.js";
-import { renderPlaces, setStatus, updateWeatherUI } from "./ui.js";
+import { renderPlaces, setStatus } from "./ui.js";
 import { getStoredItem, setStoredItem } from "./services/storageService.js";
 import { setupDragAndDrop } from "./services/dragDropService.js";
-import { getManizalesWeather } from "./services/weatherService.js";
-
-let currentWeather = null;
 
 const elements = {
   canvas: document.querySelector("#map-canvas"),
@@ -29,7 +26,6 @@ const elements = {
   locate: document.querySelector("#locate-btn"),
   save: document.querySelector("#save-btn"),
   clear: document.querySelector("#clear-btn"),
-  weather: document.querySelector("#weather-btn"),
 };
 
 const map = createMap(elements.canvas, {
@@ -99,34 +95,6 @@ function notifyAdded(id) {
   if (place) setStatus(elements.status, `${place.name} agregado a tu selección.`);
 }
 
-/** Carga el estado del clima real de Manizales. */
-async function loadWeather() {
-  currentWeather = await getManizalesWeather();
-  updateWeatherUI(currentWeather);
-  map.setWeather?.(currentWeather);
-}
-
-/** Alterna manualmente entre modo lluvia y soleado para demostración del docente. */
-function toggleWeatherSimulation() {
-  if (!currentWeather) return;
-  const isRainingNow = !currentWeather.isRaining;
-  currentWeather = {
-    ...currentWeather,
-    isRaining: isRainingNow,
-    temperature: isRainingNow ? 15 : 21,
-    description: isRainingNow ? "Lluvia simulada" : "Soleado simulado",
-    emoji: isRainingNow ? "🌧️" : "☀️",
-  };
-  updateWeatherUI(currentWeather);
-  map.setWeather?.(currentWeather);
-  setStatus(
-    elements.status,
-    isRainingNow
-      ? "Modo lluvia activado: se alertará sobre lugares al aire libre."
-      : "Modo soleado activado: excelente clima para recorrer la ciudad.",
-  );
-}
-
 /** Conecta los botones de la barra de acciones. */
 function bindActions() {
   document.addEventListener("click", (event) => {
@@ -150,7 +118,6 @@ function bindActions() {
   elements.locate.addEventListener("click", () => {
     locateUser();
   });
-  elements.weather?.addEventListener("click", toggleWeatherSimulation);
 }
 
 /** Conecta la interacción de arrastrar y soltar nativa entre las listas. */
@@ -175,7 +142,6 @@ async function init() {
   bindActions();
   bindDragAndDrop();
   map.start();
-  loadWeather();
 
   try {
     await loadPlaces();

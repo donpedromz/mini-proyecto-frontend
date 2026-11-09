@@ -108,15 +108,3 @@ export function setStatus(statusElement, message, type = "info") {
   statusElement.textContent = message;
   statusElement.dataset.type = type;
 }
-
-/**
- * Actualiza la información del clima en la barra de herramientas.
- * @param {{temperature: number, isRaining: boolean, description: string, emoji: string}} weather
- */
-export function updateWeatherUI(weather) {
-  const icon = document.querySelector("#weather-icon");
-  const text = document.querySelector("#weather-text");
-  if (icon && text && weather) {
-    text.textContent = `${weather.temperature}°C • ${weather.description}`;
-  }
-}
