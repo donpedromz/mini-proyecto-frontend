@@ -122,7 +122,6 @@ export function updateWeatherUI(weather) {
   const icon = document.querySelector("#weather-icon");
   const text = document.querySelector("#weather-text");
   if (icon && text && weather) {
-    icon.textContent = weather.emoji;
     text.textContent = `${weather.temperature}°C • ${weather.description}`;
   }
 }
