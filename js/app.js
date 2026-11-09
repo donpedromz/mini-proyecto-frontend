@@ -10,6 +10,7 @@ import {
   setSelection,
   toggleSelection,
 } from "./data.js";
+import { Place } from "./entities/Place.js";
 import { getCurrentPosition } from "./services/locationService.js";
 import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
@@ -48,7 +49,7 @@ function refresh() {
 function loadSavedSelection() {
   const saved = getStoredItem(STORAGE_KEY, null);
   if (Array.isArray(saved)) {
-    setSelection(saved);
+    setSelection(saved.map((place) => Place.from(place)).filter(Boolean));
   } else if (saved !== null) {
     setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
   }
