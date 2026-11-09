@@ -31,9 +31,13 @@ const map = createMap(elements.canvas, {
     refresh();
   },
 });
+
+/** Vuelve a pintar las listas de lugares. */
 function refresh() {
   renderPlaces(elements.list, elements.selected);
 }
+
+/** Carga la selección guardada en el navegador. */
 function loadSavedSelection() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -44,6 +48,8 @@ function loadSavedSelection() {
     setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
   }
 }
+
+/** Guarda la selección actual en el navegador. */
 function saveSelection() {
   try {
     const { selected } = getState();
@@ -53,6 +59,8 @@ function saveSelection() {
     setStatus(elements.status, "No se pudo guardar en este navegador", "error");
   }
 }
+
+/** Carga el catálogo de lugares y fija el centro de la ciudad. */
 async function loadPlaces() {
   setStatus(elements.status, `Cargando puntos de ${CITY.label}…`);
   const { places, center, meta } = await getAll();
@@ -62,6 +70,8 @@ async function loadPlaces() {
   void meta;
   setStatus(elements.status, "");
 }
+
+/** Pide la ubicación al navegador y centra el mapa en ella. */
 async function locateUser() {
   setStatus(elements.status, "Buscando tu ubicación…");
   try {
@@ -74,6 +84,8 @@ async function locateUser() {
     setStatus(elements.status, `No se pudo obtener tu ubicación: ${error.message}`, "error");
   }
 }
+
+/** Conecta los botones de la barra de acciones. */
 function bindActions() {
   document.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
@@ -94,8 +106,16 @@ function bindActions() {
   });
 
 }
+
+/** Permite arrastrar lugares de la lista al panel de seleccionados. */
 function bindDragAndDrop() {
   let drag = null;
+
+  /**
+   * Indica si el puntero está sobre el panel de seleccionados.
+   * @param {PointerEvent} event - Evento del puntero.
+   * @returns {boolean} true si está dentro de la zona.
+   */
   const isOverDropZone = (event) => {
     const rect = elements.selected.getBoundingClientRect();
     return (
@@ -120,6 +140,8 @@ function bindDragAndDrop() {
     moveGhost(event);
     event.preventDefault();
   });
+
+  /** Mueve la tarjeta fantasma y resalta la zona de destino. */
   function moveGhost(event) {
     if (!drag) return;
     drag.ghost.style.left = `${event.clientX - 30}px`;
@@ -139,6 +161,8 @@ function bindDragAndDrop() {
     refresh();
   });
 }
+
+/** Arranca la aplicación y carga los datos iniciales. */
 async function init() {
   renderIcons(document);
   loadSavedSelection();

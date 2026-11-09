@@ -1,8 +1,20 @@
 import { PLACES_SEED_URL } from "../config.js";
 import { api } from "./api.js";
+
+/**
+ * Comprueba que un valor sea una coordenada válida.
+ * @param {*} value - Valor a comprobar.
+ * @returns {boolean} true si es un número finito.
+ */
 function isValidCoordinate(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
+
+/**
+ * Limpia y valida un lugar del catálogo.
+ * @param {object} place - Lugar recibido.
+ * @returns {object|null} Lugar normalizado o null si no es válido.
+ */
 function normalizePlace(place) {
   if (!place || typeof place.id !== "string" || typeof place.name !== "string") return null;
   if (!isValidCoordinate(place.lat) || !isValidCoordinate(place.lon)) return null;
@@ -15,6 +27,12 @@ function normalizePlace(place) {
     source: place.source || "seed",
   };
 }
+
+/**
+ * Convierte un error de carga en un mensaje legible.
+ * @param {*} error - Error original.
+ * @returns {Error} Error con mensaje para el usuario.
+ */
 function createPlacesError(error) {
   if (error?.response?.status) {
     return new Error(`HTTP ${error.response.status} al cargar el catálogo local de lugares.`);
@@ -25,6 +43,11 @@ function createPlacesError(error) {
   if (error instanceof Error && error.message) return error;
   return new Error("No se pudo cargar el catálogo local de lugares.");
 }
+
+/**
+ * Carga el catálogo local de lugares.
+ * @returns {Promise<{meta: object, center: {lat: number, lon: number}, places: Array<object>}>} Datos del catálogo.
+ */
 export async function getAll() {
   try {
     const { data: seed } = await api.get(PLACES_SEED_URL);

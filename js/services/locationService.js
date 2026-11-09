@@ -1,3 +1,8 @@
+/**
+ * Obtiene la ubicación actual del navegador.
+ * @param {PositionOptions} [options={}] - Opciones de geolocalización.
+ * @returns {Promise<{lat: number, lon: number, accuracy: number}>} Coordenadas y precisión.
+ */
 export function getCurrentPosition(options = {}) {
   return new Promise((resolve, reject) => {
     if (!("geolocation" in navigator)) {

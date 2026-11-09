@@ -9,15 +9,44 @@ import {
   projectLatLon,
   zoomViewAt,
 } from "./services/tileMapService.js";
+
+/**
+ * Lee una variable CSS del documento.
+ * @param {string} name - Nombre de la variable.
+ * @returns {string} Valor de la variable.
+ */
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
+
+/**
+ * Indica si dos rectángulos se superponen.
+ * @param {{x: number, y: number, width: number, height: number}} a - Primer rectángulo.
+ * @param {{x: number, y: number, width: number, height: number}} b - Segundo rectángulo.
+ * @returns {boolean} true si se superponen.
+ */
 function rectsOverlap(a, b) {
   return !(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);
 }
+
+/**
+ * Crea la caja de una etiqueta centrada en su línea de texto.
+ * @param {number} x - Posición horizontal.
+ * @param {number} y - Posición vertical.
+ * @param {number} width - Ancho de la etiqueta.
+ * @param {number} height - Alto de la etiqueta.
+ * @returns {{x: number, y: number, width: number, height: number}} Caja de la etiqueta.
+ */
 function labelBox(x, y, width, height) {
   return { x, y: y - height / 2, width, height };
 }
+
+/**
+ * Crea el mapa interactivo sobre un canvas.
+ * @param {HTMLCanvasElement} canvas - Canvas donde se dibuja el mapa.
+ * @param {{onSelectPlace?: (place: object) => void}} [options={}] - Callbacks del mapa.
+ * @returns {{start: Function, stop: Function, draw: Function, hitTest: Function, recenter: Function, setHover: Function, clearHover: Function}} Controlador del mapa.
+ */
 export function createMap(canvas, { onSelectPlace } = {}) {
   const ctx = canvas.getContext("2d");
   let points = [];
@@ -29,6 +58,8 @@ export function createMap(canvas, { onSelectPlace } = {}) {
   const drag = { active: false, pointerId: null, startX: 0, startY: 0, moved: false };
   const pointers = new Map();
   let pinch = null;
+
+  /** Devuelve la vista actual o crea una centrada en el usuario. */
   function ensureView() {
     if (isValidView(view)) return view;
     const { me } = getState();
@@ -37,10 +68,19 @@ export function createMap(canvas, { onSelectPlace } = {}) {
     view = isValidView(next) ? next : null;
     return view;
   }
+
+  /**
+   * Centra el mapa en unas coordenadas.
+   * @param {number} lat - Latitud.
+   * @param {number} lon - Longitud.
+   * @param {number} [zoom] - Zoom; conserva el actual si se omite.
+   */
   function recenter(lat, lon, zoom = view?.zoom ?? TILE_MAP.zoom) {
     const next = createView(lat, lon, zoom, CITY_BOUNDS);
     if (isValidView(next)) view = next;
   }
+
+  /** Redibuja el canvas completo. */
   function draw() {
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.clientWidth;
@@ -62,38 +102,68 @@ export function createMap(canvas, { onSelectPlace } = {}) {
     points = drawPlaces(ctx, currentView, width, height);
     drawUserMarker(ctx, width, height);
   }
+
+  /** Dibuja el mapa en cada frame de animación. */
   function loop() {
     draw();
     animationId = requestAnimationFrame(loop);
   }
+
+  /** Activa las interacciones y el bucle de dibujo. */
   function start() {
     bindInteractions();
     if (animationId == null) loop();
   }
+
+  /** Detiene el bucle de dibujo. */
   function stop() {
     if (animationId != null) {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
   }
+
+  /**
+   * Convierte coordenadas de pantalla a coordenadas del canvas.
+   * @param {number} clientX - Coordenada X del puntero.
+   * @param {number} clientY - Coordenada Y del puntero.
+   * @returns {{x: number, y: number}} Posición en el canvas.
+   */
   function localPoint(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     return { x: clientX - rect.left, y: clientY - rect.top };
   }
+
+  /**
+   * Busca el punto de interés más cercano al cursor.
+   * @param {number} clientX - Coordenada X del puntero.
+   * @param {number} clientY - Coordenada Y del puntero.
+   * @returns {{place: object, x: number, y: number}|undefined} Punto encontrado.
+   */
   function hitTest(clientX, clientY) {
     const { x, y } = localPoint(clientX, clientY);
     return points.find((point) => Math.hypot(point.x - x, point.y - y) < MAP_HIT_RADIUS_PX);
   }
+
+  /**
+   * Actualiza el punto resaltado y el cursor.
+   * @param {number} clientX - Coordenada X del puntero.
+   * @param {number} clientY - Coordenada Y del puntero.
+   */
   function updateHover(clientX, clientY) {
     if (drag.active || pinch) return;
     const hit = hitTest(clientX, clientY);
     hoveredId = hit?.place.id ?? null;
     canvas.style.cursor = hit ? "pointer" : "grab";
   }
+
+  /** Quita el resaltado del punto. */
   function clearHover() {
     hoveredId = null;
     if (!drag.active) canvas.style.cursor = "grab";
   }
+
+  /** Inicia el gesto de pellizco con dos dedos. */
   function beginPinch() {
     if (pointers.size !== 2 || !isValidView(view)) return;
     const [a, b] = [...pointers.values()];
@@ -110,6 +180,8 @@ export function createMap(canvas, { onSelectPlace } = {}) {
     drag.active = false;
     hoveredId = null;
   }
+
+  /** Registra arrastre, pellizco, rueda y clic en el canvas. */
   function bindInteractions() {
     canvas.style.touchAction = "none";
     canvas.style.cursor = "grab";
@@ -171,6 +243,8 @@ export function createMap(canvas, { onSelectPlace } = {}) {
 
       updateHover(event.clientX, event.clientY);
     });
+
+    /** Cierra un puntero y actualiza el estado del gesto. */
     function endPointer(event) {
       if (drag.active && event.pointerId === drag.pointerId) {
         if (drag.moved) suppressNextClick = true;
@@ -216,6 +290,15 @@ export function createMap(canvas, { onSelectPlace } = {}) {
       { passive: false },
     );
   }
+
+  /**
+   * Dibuja los puntos de interés y sus etiquetas.
+   * @param {CanvasRenderingContext2D} ctx - Contexto del canvas.
+   * @param {{lat: number, lon: number, zoom: number}} currentView - Vista actual.
+   * @param {number} width - Ancho del canvas.
+   * @param {number} height - Alto del canvas.
+   * @returns {Array<{place: object, x: number, y: number}>} Puntos dibujados.
+   */
   function drawPlaces(ctx, currentView, width, height) {
     const places = allMappablePlaces();
     const nextPoints = [];
@@ -268,6 +351,13 @@ export function createMap(canvas, { onSelectPlace } = {}) {
 
     return nextPoints;
   }
+
+  /**
+   * Dibuja el marcador pulsante del usuario.
+   * @param {CanvasRenderingContext2D} ctx - Contexto del canvas.
+   * @param {number} width - Ancho del canvas.
+   * @param {number} height - Alto del canvas.
+   */
   function drawUserMarker(ctx, width, height) {
     const { me } = getState();
     const currentView = view;

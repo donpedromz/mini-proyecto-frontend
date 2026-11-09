@@ -1,10 +1,23 @@
 import { availablePlaces, distanceMeters, getState } from "./data.js";
 import { getCategoryIconName, renderIcons } from "./services/icons.js";
+
+/**
+ * Devuelve la distancia al usuario en texto.
+ * @param {object} place - Lugar con latitud y longitud.
+ * @returns {string} Distancia en metros o cadena vacía sin ubicación.
+ */
 function formatDistance(place) {
   const { me } = getState();
   if (!me) return "";
   return `${distanceMeters(place)} m`;
 }
+
+/**
+ * Construye la tarjeta HTML de un lugar.
+ * @param {object} place - Lugar a mostrar.
+ * @param {"add"|"remove"} action - Acción del botón de la tarjeta.
+ * @returns {HTMLElement} Tarjeta lista para insertar.
+ */
 function createPlaceCard(place, action) {
   const card = document.createElement("div");
   card.className = "place-card";
@@ -22,6 +35,12 @@ function createPlaceCard(place, action) {
   `;
   return card;
 }
+
+/**
+ * Vuelve a pintar las listas de lugares disponibles y seleccionados.
+ * @param {HTMLElement} listElement - Contenedor de lugares disponibles.
+ * @param {HTMLElement} selectedElement - Contenedor de lugares seleccionados.
+ */
 export function renderPlaces(listElement, selectedElement) {
   const { selected, places } = getState();
 
@@ -52,6 +71,13 @@ export function renderPlaces(listElement, selectedElement) {
   renderIcons(listElement);
   renderIcons(selectedElement);
 }
+
+/**
+ * Muestra un mensaje de estado en la interfaz.
+ * @param {HTMLElement} statusElement - Elemento donde se escribe el mensaje.
+ * @param {string} message - Texto a mostrar.
+ * @param {"info"|"error"} [type="info"] - Tipo de mensaje.
+ */
 export function setStatus(statusElement, message, type = "info") {
   statusElement.textContent = message;
   statusElement.dataset.type = type;
