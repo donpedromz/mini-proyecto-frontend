@@ -102,18 +102,18 @@ function checkWeatherRules(id) {
     if (place.outdoor) {
       setStatus(
         elements.status,
-        `⚠️ Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`,
+        `Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`,
       );
     } else {
       setStatus(
         elements.status,
-        `✅ ${place.name} es un espacio techado ideal para resguardarse de la lluvia.`,
+        `${place.name} es un espacio techado ideal para resguardarse de la lluvia.`,
       );
     }
   } else if (!place.outdoor) {
     setStatus(elements.status, `${place.name} agregado a tu selección.`);
   } else {
-    setStatus(elements.status, `☀️ Buen clima para disfrutar ${place.name} al aire libre.`);
+    setStatus(elements.status, `Buen clima para disfrutar ${place.name} al aire libre.`);
   }
 }
 
@@ -133,7 +133,7 @@ function toggleWeatherSimulation() {
     isRaining: isRainingNow,
     temperature: isRainingNow ? 15 : 21,
     description: isRainingNow ? "Lluvia simulada" : "Soleado simulado",
-    emoji: isRainingNow ? "🌧️" : "☀️",
+    icon: isRainingNow ? "cloud-rain" : "sun",
   };
   updateWeatherUI(currentWeather);
   map.setWeather?.(currentWeather);
