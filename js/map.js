@@ -358,7 +358,40 @@ export function createMap(canvas, { onSelectPlace } = {}) {
   }
 
   /**
-   * Dibuja el widget meteorológico animado (nube con lluvia o sol) sobre el canvas.
+   * Dibuja una nube estilizada en el mapa.
+   * @param {CanvasRenderingContext2D} ctx - Contexto de renderizado.
+   * @param {number} x - Coordenada X.
+   * @param {number} y - Coordenada Y.
+   * @param {number} [scale=1] - Escala de la nube.
+   * @param {number} [alpha=0.85] - Opacidad de la nube.
+   */
+  function drawCloud(ctx, x, y, scale = 1, alpha = 0.85) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = `rgba(240, 244, 250, ${alpha})`;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.08)";
+    ctx.shadowBlur = 6 * scale;
+    ctx.shadowOffsetY = 2 * scale;
+
+    ctx.beginPath();
+    ctx.arc(-14, 0, 12, 0, Math.PI * 2);
+    ctx.arc(4, -8, 16, 0, Math.PI * 2);
+    ctx.arc(22, -2, 11, 0, Math.PI * 2);
+    ctx.arc(8, 6, 12, 0, Math.PI * 2);
+    ctx.arc(-6, 6, 10, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(215, 225, 238, ${alpha})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  /**
+   * Dibuja nubecitas sutiles flotando sobre el mapa según el clima.
    * @param {CanvasRenderingContext2D} ctx - Contexto de renderizado.
    * @param {number} width - Ancho del canvas.
    * @param {number} height - Alto del canvas.
@@ -368,78 +401,45 @@ export function createMap(canvas, { onSelectPlace } = {}) {
 
     const now = Date.now();
 
-    // Gotas de lluvia diagonales sobre el mapa si llueve
     if (weather.isRaining) {
+      // Nubecitas flotando suavemente sobre el mapa (típico de Manizales)
+      const drift = (now * 0.008) % (width + 120);
+
+      const cloud1X = ((width * 0.2 + drift) % (width + 120)) - 60;
+      const cloud1Y = 42 + Math.sin(now / 900) * 3;
+      drawCloud(ctx, cloud1X, cloud1Y, 1.05, 0.88);
+
+      const cloud2X = ((width * 0.65 + drift * 0.8) % (width + 120)) - 60;
+      const cloud2Y = 68 + Math.cos(now / 1100) * 2.5;
+      drawCloud(ctx, cloud2X, cloud2Y, 0.85, 0.8);
+
+      const cloud3X = ((width * 0.42 + drift * 0.6) % (width + 120)) - 60;
+      const cloud3Y = height * 0.28 + Math.sin(now / 1300) * 2;
+      drawCloud(ctx, cloud3X, cloud3Y, 0.7, 0.7);
+    } else {
+      // Sol limpio en la esquina superior derecha
       ctx.save();
-      ctx.strokeStyle = "rgba(74, 144, 226, 0.35)";
-      ctx.lineWidth = 1.5;
-      ctx.lineCap = "round";
-      const dropCount = 35;
-      for (let i = 0; i < dropCount; i += 1) {
-        const x = ((i * 47 + now * 0.12) % (width + 60)) - 30;
-        const y = ((i * 83 + now * 0.35) % (height + 40)) - 20;
+      const sunX = width - 36;
+      const sunY = 32;
+      const pulse = (Math.sin(now / 600) + 1) * 1.2;
+
+      ctx.fillStyle = "rgba(255, 185, 0, 0.95)";
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255, 195, 0, 0.75)";
+      ctx.lineWidth = 1.8;
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+        const r1 = 14 + pulse;
+        const r2 = 18 + pulse;
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x - 3, y + 10);
+        ctx.moveTo(sunX + Math.cos(a) * r1, sunY + Math.sin(a) * r1);
+        ctx.lineTo(sunX + Math.cos(a) * r2, sunY + Math.sin(a) * r2);
         ctx.stroke();
       }
       ctx.restore();
     }
-
-    // Dibujar la nubecita estilizada en la esquina superior derecha del mapa
-    const cloudX = width - 42;
-    const cloudY = 28;
-    const floatOffset = Math.sin(now / 700) * 2.5;
-
-    ctx.save();
-    ctx.translate(cloudX, cloudY + floatOffset);
-
-    if (weather.isRaining) {
-      // Gotitas cayendo de la nube
-      ctx.strokeStyle = "rgba(43, 108, 240, 0.75)";
-      ctx.lineWidth = 1.6;
-      for (let i = -10; i <= 10; i += 7) {
-        const dropProgress = ((now + i * 150) % 700) / 700;
-        const dropY = 10 + dropProgress * 10;
-        ctx.beginPath();
-        ctx.moveTo(i - 1, dropY);
-        ctx.lineTo(i - 2, dropY + 4);
-        ctx.stroke();
-      }
-
-      // Nube vectorizada
-      ctx.fillStyle = "rgba(180, 195, 210, 0.95)";
-      ctx.beginPath();
-      ctx.arc(-8, 0, 8, 0, Math.PI * 2);
-      ctx.arc(4, -3, 10, 0, Math.PI * 2);
-      ctx.arc(14, 1, 7, 0, Math.PI * 2);
-      ctx.arc(0, 3, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-    } else {
-      // Sol radiante estilizado
-      const pulse = (Math.sin(now / 500) + 1) * 1.2;
-      ctx.fillStyle = "rgba(255, 180, 0, 0.95)";
-      ctx.beginPath();
-      ctx.arc(0, 0, 9 + pulse, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255, 195, 0, 0.8)";
-      ctx.lineWidth = 1.8;
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-        const r1 = 12 + pulse;
-        const r2 = 16 + pulse;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
-        ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
-        ctx.stroke();
-      }
-    }
-
-    ctx.restore();
   }
 
   /**
