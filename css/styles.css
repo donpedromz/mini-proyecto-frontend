@@ -278,6 +278,7 @@ button.primary {
   padding: 4px 9px;
 }
 
+.place-card.is-dragging,
 .sortable-ghost {
   opacity: 0.45;
   border-style: dashed;

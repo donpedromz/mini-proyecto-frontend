@@ -1,4 +1,3 @@
-import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm";
 import { CITY, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
@@ -16,6 +15,7 @@ import { renderIcons } from "./services/icons.js";
 import { createMap } from "./map.js";
 import { renderPlaces, setStatus } from "./ui.js";
 import { getStoredItem, setStoredItem } from "./services/storageService.js";
+import { setupDragAndDrop } from "./services/dragDropService.js";
 
 const elements = {
   canvas: document.querySelector("#map-canvas"),
@@ -107,33 +107,16 @@ function bindActions() {
 
 }
 
-/** Permite arrastrar lugares de la lista al panel de seleccionados. */
-function bindSortable() {
-  const clearOver = () => elements.selected.classList.remove("over");
-
-  Sortable.create(elements.list, {
-    group: { name: "places", pull: "clone", put: false },
-    sort: false,
-    handle: ".drag-handle",
-    draggable: ".place-card",
-    onMove: clearOver,
-    onEnd: clearOver,
-  });
-
-  Sortable.create(elements.selected, {
-    group: { name: "places", pull: false, put: true },
-    sort: false,
-    handle: ".drag-handle",
-    draggable: ".place-card",
-    onMove: (event) => {
-      elements.selected.classList.toggle("over", event.to === elements.selected);
+/** Conecta la interacción de arrastrar y soltar nativa entre las listas. */
+function bindDragAndDrop() {
+  setupDragAndDrop({
+    sourceContainer: elements.list,
+    targetContainer: elements.selected,
+    onDrop: (id) => {
+      if (addSelection(id)) {
+        refresh();
+      }
     },
-    onAdd: (event) => {
-      addSelection(event.item.dataset.id);
-      clearOver();
-      requestAnimationFrame(refresh);
-    },
-    onEnd: clearOver,
   });
 }
 
@@ -143,7 +126,7 @@ async function init() {
   loadSavedSelection();
   refresh();
   bindActions();
-  bindSortable();
+  bindDragAndDrop();
   map.start();
 
   try {
