@@ -1,75 +1,78 @@
-import { BASE_PLACES, DEFAULT_LOCATION } from "./config.js";
-
 const state = {
-  me: { lat: DEFAULT_LOCATION.lat, lon: DEFAULT_LOCATION.lon, real: false },
+  me: null,
   places: [],
   selected: [],
 };
 
-function createRng(seed) {
-  let value = seed | 0;
-  return () => {
-    value = (value + 0x6d2b79f5) | 0;
-    let t = Math.imul(value ^ (value >>> 15), 1 | value);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
+/**
+ * Calcula los metros que equivalen a un grado de longitud en una latitud.
+ * @param {number} lat - Latitud en grados.
+ * @returns {number} Metros por grado de longitud.
+ */
 export function metersPerLonDegree(lat) {
   return 111320 * Math.cos((lat * Math.PI) / 180);
 }
 
 export const METERS_PER_LAT_DEGREE = 110540;
 
+/** Devuelve el estado global de la aplicación. */
 export function getState() {
   return state;
 }
 
-export function setUserLocation(lat, lon, real = true) {
+/**
+ * Guarda la ubicación de referencia para calcular distancias.
+ * @param {number} lat - Latitud en grados.
+ * @param {number} lon - Longitud en grados.
+ * @param {boolean} [real=false] - Indica si la ubicación viene del GPS.
+ */
+export function setReferenceLocation(lat, lon, real = false) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   state.me = { lat, lon, real };
 }
 
-export function generatePlaces() {
-  // Sustituir por una llamada a una API real (Overpass, Places...)
-  const random = createRng(7);
-  const kx = metersPerLonDegree(state.me.lat);
-
-  state.places = BASE_PLACES.map(([name, cat], index) => {
-    const angle = random() * Math.PI * 2;
-    const distanceMeters = 250 + random() * 1100;
-    return {
-      id: `p${index}`,
-      name,
-      cat,
-      lat: state.me.lat + (Math.sin(angle) * distanceMeters) / METERS_PER_LAT_DEGREE,
-      lon: state.me.lon + (Math.cos(angle) * distanceMeters) / kx,
-    };
-  });
-
-  state.selected = state.selected.map(
-    (saved) => state.places.find((place) => place.id === saved.id) || saved,
-  );
+/**
+ * Reemplaza el catálogo de lugares y descarta selecciones que ya no existen.
+ * @param {Array<object>} places - Lugares disponibles.
+ */
+export function setPlaces(places) {
+  state.places = Array.isArray(places) ? places : [];
+  const knownIds = new Set(state.places.map((place) => place.id));
+  state.selected = state.selected.filter((place) => knownIds.has(place.id));
 }
 
+/**
+ * Calcula el desplazamiento en metros de un lugar respecto al usuario.
+ * @param {object} place - Lugar con latitud y longitud.
+ * @returns {{x: number, y: number}} Desplazamiento en metros.
+ */
 export function offsetFromUser(place) {
+  if (!state.me) return { x: 0, y: 0 };
   return {
     x: (place.lon - state.me.lon) * metersPerLonDegree(state.me.lat),
     y: (place.lat - state.me.lat) * METERS_PER_LAT_DEGREE,
   };
 }
 
+/**
+ * Calcula la distancia en metros entre el usuario y un lugar.
+ * @param {object} place - Lugar con latitud y longitud.
+ * @returns {number} Distancia redondeada en metros.
+ */
 export function distanceMeters(place) {
+  if (!state.me) return 0;
   const { x, y } = offsetFromUser(place);
   return Math.round(Math.hypot(x, y));
 }
 
+/** Devuelve los lugares no seleccionados, ordenados por distancia. */
 export function availablePlaces() {
   return state.places
     .filter((place) => !state.selected.some((selected) => selected.id === place.id))
     .sort((a, b) => distanceMeters(a) - distanceMeters(b));
 }
 
+/** Devuelve todos los lugares que deben dibujarse en el mapa. */
 export function allMappablePlaces() {
   const extraSelected = state.selected.filter(
     (selected) => !state.places.some((place) => place.id === selected.id),
@@ -77,14 +80,29 @@ export function allMappablePlaces() {
   return [...state.places, ...extraSelected];
 }
 
+/**
+ * Indica si un lugar está en la selección.
+ * @param {string} id - Identificador del lugar.
+ * @returns {boolean} true si está seleccionado.
+ */
 export function isSelected(id) {
   return state.selected.some((place) => place.id === id);
 }
 
+/**
+ * Busca un lugar por id en el catálogo o en la selección.
+ * @param {string} id - Identificador del lugar.
+ * @returns {object|undefined} Lugar encontrado.
+ */
 export function findPlace(id) {
   return state.places.find((place) => place.id === id) || state.selected.find((place) => place.id === id);
 }
 
+/**
+ * Añade un lugar a la selección.
+ * @param {string} id - Identificador del lugar.
+ * @returns {boolean} false si no existe o ya estaba seleccionado.
+ */
 export function addSelection(id) {
   if (isSelected(id)) return false;
   const place = state.places.find((item) => item.id === id);
@@ -93,12 +111,21 @@ export function addSelection(id) {
   return true;
 }
 
+/**
+ * Quita un lugar de la selección.
+ * @param {string} id - Identificador del lugar.
+ * @returns {boolean} true si lo eliminó.
+ */
 export function removeSelection(id) {
   const before = state.selected.length;
   state.selected = state.selected.filter((place) => place.id !== id);
   return state.selected.length !== before;
 }
 
+/**
+ * Añade o quita un lugar de la selección según su estado actual.
+ * @param {string} id - Identificador del lugar.
+ */
 export function toggleSelection(id) {
   if (isSelected(id)) {
     removeSelection(id);
@@ -107,10 +134,15 @@ export function toggleSelection(id) {
   }
 }
 
+/** Vacía la selección. */
 export function clearSelection() {
   state.selected = [];
 }
 
+/**
+ * Reemplaza la selección con una lista de lugares.
+ * @param {Array<object>} items - Lugares a seleccionar.
+ */
 export function setSelection(items) {
   state.selected = Array.isArray(items) ? items : [];
 }

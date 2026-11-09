@@ -1,30 +1,44 @@
-export const DEFAULT_LOCATION = { lat: 40.4168, lon: -3.7038 };
-
-export const CATEGORY_ICONS = {
-  museo: "🏛️",
-  parque: "🌳",
-  mercado: "🛒",
-  salud: "🏥",
-  cultura: "🎭",
-  transporte: "🚉",
-  edu: "🎓",
-  mirador: "🔭",
+export const CITY = {
+  label: "Manizales",
+  country: "Colombia",
 };
 
-export const BASE_PLACES = [
-  ["Museo de la Ciudad", "museo"],
-  ["Parque Central", "parque"],
-  ["Mercado Municipal", "mercado"],
-  ["Hospital General", "salud"],
-  ["Teatro Municipal", "cultura"],
-  ["Estación Central", "transporte"],
-  ["Universidad", "edu"],
-  ["Mirador del Cerro", "mirador"],
-  ["Biblioteca Pública", "cultura"],
-  ["Jardín Botánico", "parque"],
-];
+// Límites reales del perímetro urbano de Manizales (Nominatim / OpenStreetMap).
+export const CITY_BOUNDS = {
+  south: 5.0225297,
+  north: 5.1048866,
+  west: -75.5517477,
+  east: -75.4203189,
+};
+
+export const PLACES_SEED_URL = "./data/places.manizales.json";
+
+export const HTTP_TIMEOUT_MS = 10000;
+
+export const TILE_MAP = {
+  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  tileSize: 256,
+  zoom: 14,
+  minZoom: 12,
+  maxZoom: 18,
+  attribution: "© OpenStreetMap contributors",
+};
+
+export const LABEL_ZOOM_THRESHOLD = 15;
+
+export const CATEGORY_ICONS = {
+  museo: "landmark",
+  parque: "tree-pine",
+  mercado: "shopping-basket",
+  salud: "hospital",
+  cultura: "drama",
+  transporte: "train-front",
+  edu: "graduation-cap",
+  mirador: "binoculars",
+  patrimonio: "landmark",
+  turismo: "map-pin",
+};
 
 export const STORAGE_KEY = "lugares-sel";
 export const GEO_TIMEOUT_MS = 8000;
 export const MAP_HIT_RADIUS_PX = 14;
-export const CANVAS_HEIGHT_PX = 320;
