@@ -1,3 +1,4 @@
+import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm";
 import { CITY, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
@@ -109,12 +110,6 @@ function bindActions() {
 
 /** Permite arrastrar lugares de la lista al panel de seleccionados. */
 function bindSortable() {
-  const Sortable = window.Sortable;
-  if (!Sortable) {
-    setStatus(elements.status, "No se pudo cargar el arrastre (SortableJS).");
-    return;
-  }
-
   const clearOver = () => elements.selected.classList.remove("over");
 
   Sortable.create(elements.list, {
