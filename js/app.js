@@ -15,6 +15,7 @@ import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
 import { createMap } from "./map.js";
 import { renderPlaces, setStatus } from "./ui.js";
+import { getStoredItem, setStoredItem } from "./services/storageService.js";
 
 const elements = {
   canvas: document.querySelector("#map-canvas"),
@@ -40,23 +41,21 @@ function refresh() {
 
 /** Carga la selección guardada en el navegador. */
 function loadSavedSelection() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) setSelection(parsed);
-  } catch {
+  const saved = getStoredItem(STORAGE_KEY, null);
+  if (Array.isArray(saved)) {
+    setSelection(saved);
+  } else if (saved !== null) {
     setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
   }
 }
 
 /** Guarda la selección actual en el navegador. */
 function saveSelection() {
-  try {
-    const { selected } = getState();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
+  const { selected } = getState();
+  const saved = setStoredItem(STORAGE_KEY, selected);
+  if (saved) {
     setStatus(elements.status, `Selección guardada (${selected.length})`);
-  } catch {
+  } else {
     setStatus(elements.status, "No se pudo guardar en este navegador", "error");
   }
 }
