@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Puntos icónicos de Manizales</title>
+    <link rel="icon" type="image/png" href="./assets/brand/favicon-mzl.png" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="brand-bar">
+        <img
+          class="brand-bar__logo"
+          src="./assets/brand/mzl-logo.png"
+          alt="MZL — Manizales del Alma"
+          width="64"
+          height="38"
+        />
+        <h1>Puntos icónicos de Manizales</h1>
+      </header>
+
+      <div class="toolbar" aria-label="Acciones">
+        <button id="locate-btn" type="button"><i data-lucide="locate-fixed"></i> Mi ubicación</button>
+        <button id="save-btn" class="primary" type="button"><i data-lucide="save"></i> Guardar selección</button>
+        <button id="clear-btn" type="button"><i data-lucide="trash-2"></i> Vaciar</button>
+        <button id="weather-btn" class="weather-toggle" type="button" aria-label="Alternar clima" title="Pulsa para alternar entre lluvia y sol"><span id="weather-icon">🌧️</span> <span id="weather-text">Manizales 15°C</span></button>
+      </div>
+
+      <section class="map-block" aria-labelledby="map-title">
+        <h2 id="map-title" class="section-title"><i data-lucide="map"></i> Mapa de Manizales</h2>
+        <p class="section-hint">Arrastra para mover y usa la rueda o el pinch para hacer zoom.</p>
+        <canvas id="map-canvas" aria-label="Mapa de Manizales con puntos de interés"></canvas>
+        <p id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <div class="columns">
+        <section class="column" aria-labelledby="nearby-title">
+          <h2 id="nearby-title" class="section-title"><i data-lucide="landmark"></i> Puntos de interés</h2>
+          <p class="section-hint">Arrastra una tarjeta al panel derecho o pulsa <b>+</b> para seleccionarla.</p>
+          <div id="nearby-list" class="place-list"></div>
+        </section>
+
+        <section class="column" aria-labelledby="selected-title">
+          <h2 id="selected-title" class="section-title"><i data-lucide="bookmark-check"></i> Mis seleccionados</h2>
+          <p class="section-hint">Suelta aquí una tarjeta o pulsa <b>×</b> para quitarla.</p>
+          <div id="selected-list"></div>
+        </section>
+      </div>
+
+      <p class="attribution">
+        Datos geográficos: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>.
+      </p>
+      <p class="brand-credit">
+        Marca ciudad <b>MZL Manizales del Alma</b> — Alcaldía de Manizales / Promotora de Eventos y Turismo.
+      </p>
+    </main>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
