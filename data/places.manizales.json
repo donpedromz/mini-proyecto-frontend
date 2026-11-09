@@ -15,6 +15,7 @@
       "id": "osm:way/955166433",
       "name": "Catedral Basílica de Nuestra Señora del Rosario de Manizales",
       "category": "patrimonio",
+      "outdoor": false,
       "lat": 5.0673855,
       "lon": -75.5173225,
       "source": "nominatim"
@@ -23,6 +24,7 @@
       "id": "osm:node/581100723",
       "name": "Torre de Herveo",
       "category": "mirador",
+      "outdoor": true,
       "lat": 5.0561577,
       "lon": -75.4864116,
       "source": "nominatim"
@@ -31,6 +33,7 @@
       "id": "osm:way/46611367",
       "name": "Monumento a los Colonizadores",
       "category": "patrimonio",
+      "outdoor": true,
       "lat": 5.0768688,
       "lon": -75.5278316,
       "source": "nominatim"
@@ -39,6 +42,7 @@
       "id": "osm:node/280877419",
       "name": "Mirador de Chipre",
       "category": "mirador",
+      "outdoor": true,
       "lat": 5.0771816,
       "lon": -75.5282184,
       "source": "nominatim"
@@ -47,6 +51,7 @@
       "id": "osm:relation/12856878",
       "name": "Plaza de Bolívar",
       "category": "patrimonio",
+      "outdoor": true,
       "lat": 5.068083,
       "lon": -75.5173631,
       "source": "nominatim"
@@ -55,6 +60,7 @@
       "id": "osm:way/48853956",
       "name": "Recinto del Pensamiento",
       "category": "parque",
+      "outdoor": true,
       "lat": 5.0404606,
       "lon": -75.4458216,
       "source": "nominatim"
@@ -63,6 +69,7 @@
       "id": "osm:way/45703953",
       "name": "Teatro Fundadores",
       "category": "cultura",
+      "outdoor": false,
       "lat": 5.0684238,
       "lon": -75.5103558,
       "source": "nominatim"
@@ -71,6 +78,7 @@
       "id": "osm:relation/375993",
       "name": "Estadio Palogrande",
       "category": "cultura",
+      "outdoor": true,
       "lat": 5.0570052,
       "lon": -75.4906886,
       "source": "nominatim"
@@ -79,6 +87,7 @@
       "id": "osm:node/8878175941",
       "name": "Parque Los Yarumos",
       "category": "parque",
+      "outdoor": true,
       "lat": 5.0635739,
       "lon": -75.4817004,
       "source": "nominatim"
@@ -87,6 +96,7 @@
       "id": "osm:way/106577012",
       "name": "Universidad de Caldas",
       "category": "edu",
+      "outdoor": false,
       "lat": 5.0556,
       "lon": -75.4938881,
       "source": "nominatim"
