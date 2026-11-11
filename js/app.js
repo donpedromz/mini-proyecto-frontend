@@ -1,4 +1,4 @@
-import { CITY, CITY_BOUNDS, GEO_MAX_AGE_MS, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
+import { CITY_BOUNDS, GEO_MAX_AGE_MS, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
   clearSelection,
@@ -13,11 +13,12 @@ import {
 } from "./data.js";
 import { Place } from "./entities/Place.js";
 import { isWithinBounds } from "./entities/geo.js";
+import { showAlert } from "./services/alertService.js";
 import { getCurrentPosition } from "./services/locationService.js";
 import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
 import { createMap } from "./map.js";
-import { renderPlaces, setStatus, updateWeatherUI } from "./ui.js";
+import { renderPlaces, updateWeatherUI } from "./ui.js";
 import { getStoredItem, setStoredItem } from "./services/storageService.js";
 import { setupDragAndDrop } from "./services/dragDropService.js";
 import { getManizalesWeather } from "./services/weatherService.js";
@@ -28,7 +29,6 @@ const elements = {
   canvas: document.querySelector("#map-canvas"),
   list: document.querySelector("#nearby-list"),
   selected: document.querySelector("#selected-list"),
-  status: document.querySelector("#status"),
   locate: document.querySelector("#locate-btn"),
   save: document.querySelector("#save-btn"),
   clear: document.querySelector("#clear-btn"),
@@ -53,7 +53,7 @@ function loadSavedSelection() {
   if (Array.isArray(saved)) {
     setSelection(saved.map((place) => Place.from(place)).filter(Boolean));
   } else if (saved !== null) {
-    setStatus(elements.status, "No se pudo leer la selección guardada.", "error");
+    showAlert("No se pudo leer la selección guardada.");
   }
 }
 
@@ -62,23 +62,26 @@ function saveSelection() {
   const { selected } = getState();
   const saved = setStoredItem(STORAGE_KEY, selected);
   if (saved) {
-    setStatus(elements.status, `Selección guardada (${selected.length})`);
+    showAlert(`Selección guardada (${selected.length}).`);
   } else {
-    setStatus(elements.status, "No se pudo guardar en este navegador", "error");
+    showAlert("No se pudo guardar en este navegador.");
   }
 }
 
 /** Carga el catálogo de lugares y fija el centro de la ciudad. */
 async function loadPlaces() {
-  setStatus(elements.status, `Cargando puntos de ${CITY.label}…`);
-  const { places, center, meta } = await getAll();
-  setPlaces(places);
-  if (!getState().me) {
-    setReferenceLocation(center.lat, center.lon);
+  elements.list.setAttribute("aria-busy", "true");
+  try {
+    const { places, center, meta } = await getAll();
+    setPlaces(places);
+    if (!getState().me) {
+      setReferenceLocation(center.lat, center.lon);
+    }
+    refresh();
+    void meta;
+  } finally {
+    elements.list.removeAttribute("aria-busy");
   }
-  refresh();
-  void meta;
-  setStatus(elements.status, "");
 }
 
 /** Pide la ubicación al navegador y centra el mapa en ella. */
@@ -86,7 +89,6 @@ async function locateUser() {
   if (!elements.locate || elements.locate.disabled) return;
   elements.locate.disabled = true;
   elements.locate.setAttribute("aria-busy", "true");
-  setStatus(elements.status, "Buscando tu ubicación…");
 
   try {
     const { lat, lon, accuracy } = await getCurrentPosition({
@@ -97,10 +99,7 @@ async function locateUser() {
     setUserLocation(lat, lon, accuracy);
 
     if (!isWithinBounds(lat, lon, CITY_BOUNDS)) {
-      setStatus(
-        elements.status,
-        "Tu ubicación está fuera de Manizales; el mapa sigue centrado en la ciudad.",
-      );
+      showAlert("Tu ubicación está fuera de Manizales; el mapa sigue centrado en la ciudad.");
       return;
     }
 
@@ -109,9 +108,9 @@ async function locateUser() {
     refresh();
     const accuracyText =
       Number.isFinite(accuracy) && accuracy > 0 ? ` (precisión ±${Math.round(accuracy)} m)` : "";
-    setStatus(elements.status, `Ubicación actualizada${accuracyText}.`);
+    showAlert(`Ubicación actualizada${accuracyText}.`);
   } catch (error) {
-    setStatus(elements.status, `No se pudo obtener tu ubicación: ${error.message}`, "error");
+    showAlert(`No se pudo obtener tu ubicación: ${error.message}`);
   } finally {
     elements.locate.disabled = false;
     elements.locate.removeAttribute("aria-busy");
@@ -128,20 +127,14 @@ function checkWeatherRules(id) {
 
   if (currentWeather.isRaining) {
     if (place.outdoor) {
-      setStatus(
-        elements.status,
-        `Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`,
-      );
+      showAlert(`Está lloviendo en Manizales: recuerda llevar paraguas para visitar ${place.name}.`);
     } else {
-      setStatus(
-        elements.status,
-        `${place.name} es un espacio techado ideal para resguardarse de la lluvia.`,
-      );
+      showAlert(`${place.name} es un espacio techado ideal para resguardarse de la lluvia.`);
     }
   } else if (!place.outdoor) {
-    setStatus(elements.status, `${place.name} agregado a tu selección.`);
+    showAlert(`${place.name} agregado a tu selección.`);
   } else {
-    setStatus(elements.status, `Buen clima para disfrutar ${place.name} al aire libre.`);
+    showAlert(`Buen clima para disfrutar ${place.name} al aire libre.`);
   }
 }
 
@@ -165,8 +158,7 @@ function toggleWeatherSimulation() {
   };
   updateWeatherUI(currentWeather);
   map.setWeather?.(currentWeather);
-  setStatus(
-    elements.status,
+  showAlert(
     isRainingNow
       ? "Modo lluvia activado: se alertará sobre lugares al aire libre."
       : "Modo soleado activado: excelente clima para recorrer la ciudad.",
@@ -226,7 +218,7 @@ async function init() {
   try {
     await loadPlaces();
   } catch (error) {
-    setStatus(elements.status, `No se pudieron cargar los lugares: ${error.message}`, "error");
+    showAlert(`No se pudieron cargar los lugares: ${error.message}`);
   }
 }
 
