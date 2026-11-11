@@ -107,17 +107,6 @@ export function renderPlaces(listElement, selectedElement) {
 }
 
 /**
- * Muestra un mensaje de estado en la interfaz.
- * @param {HTMLElement} statusElement - Elemento donde se escribe el mensaje.
- * @param {string} message - Texto a mostrar.
- * @param {"info"|"error"} [type="info"] - Tipo de mensaje.
- */
-export function setStatus(statusElement, message, type = "info") {
-  statusElement.textContent = message;
-  statusElement.dataset.type = type;
-}
-
-/**
  * Actualiza el icono y el texto del clima en la barra de herramientas.
  * @param {{temperature: number, description: string, icon: string}} weather - Datos del clima.
  */

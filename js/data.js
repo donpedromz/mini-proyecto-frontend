@@ -1,5 +1,8 @@
+import { isValidLatLon } from "./entities/geo.js";
+
 const state = {
   me: null,
+  userLocation: null,
   places: [],
   selected: [],
 };
@@ -21,14 +24,36 @@ export function getState() {
 }
 
 /**
- * Guarda la ubicación de referencia para calcular distancias.
+ * Guarda la ubicación de referencia para calcular distancias y centrar el mapa.
  * @param {number} lat - Latitud en grados.
  * @param {number} lon - Longitud en grados.
- * @param {boolean} [real=false] - Indica si la ubicación viene del GPS.
  */
-export function setReferenceLocation(lat, lon, real = false) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-  state.me = { lat, lon, real };
+export function setReferenceLocation(lat, lon) {
+  if (!isValidLatLon(lat, lon)) return;
+  state.me = { lat, lon };
+}
+
+/**
+ * Guarda la última ubicación real obtenida del navegador.
+ * @param {number} lat - Latitud en grados.
+ * @param {number} lon - Longitud en grados.
+ * @param {number|null} [accuracy=null] - Precisión en metros.
+ */
+export function setUserLocation(lat, lon, accuracy = null) {
+  if (!isValidLatLon(lat, lon)) return;
+  state.userLocation = {
+    lat,
+    lon,
+    accuracy: Number.isFinite(accuracy) && accuracy > 0 ? accuracy : null,
+  };
+}
+
+/**
+ * Devuelve la última ubicación real del usuario, si existe.
+ * @returns {{lat: number, lon: number, accuracy: number|null}|null} Ubicación real.
+ */
+export function getUserLocation() {
+  return state.userLocation;
 }
 
 /**
