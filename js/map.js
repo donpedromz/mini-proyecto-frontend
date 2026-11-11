@@ -1,5 +1,6 @@
 import { CITY_BOUNDS, LABEL_ZOOM_THRESHOLD, MAP_HIT_RADIUS_PX, TILE_MAP } from "./config.js";
-import { allMappablePlaces, getState, isSelected } from "./data.js";
+import { allMappablePlaces, getState, getUserLocation, isSelected } from "./data.js";
+import { isWithinBounds } from "./entities/geo.js";
 import {
   clampZoom,
   createView,
@@ -9,6 +10,8 @@ import {
   projectLatLon,
   zoomViewAt,
 } from "./services/tileMapService.js";
+
+const METERS_PER_PIXEL_AT_ZOOM_0 = 156543.03392;
 
 /**
  * Lee una variable CSS del documento.
@@ -440,17 +443,53 @@ export function createMap(canvas, { onSelectPlace } = {}) {
   }
 
   /**
-   * Dibuja el marcador pulsante del usuario.
+   * Dibuja el círculo de precisión de la ubicación real.
+   * @param {CanvasRenderingContext2D} ctx - Contexto del canvas.
+   * @param {{lat: number, lon: number, accuracy: number|null}} user - Ubicación real.
+   * @param {number} x - Posición horizontal del marcador.
+   * @param {number} y - Posición vertical del marcador.
+   * @param {{lat: number, lon: number, zoom: number}} currentView - Vista actual.
+   * @param {number} width - Ancho del canvas.
+   * @param {number} height - Alto del canvas.
+   */
+  function drawAccuracyCircle(ctx, user, x, y, currentView, width, height) {
+    if (!Number.isFinite(user.accuracy) || user.accuracy <= 0) return;
+    const metersPerPixel =
+      (METERS_PER_PIXEL_AT_ZOOM_0 * Math.cos((user.lat * Math.PI) / 180)) / 2 ** currentView.zoom;
+    if (!Number.isFinite(metersPerPixel) || metersPerPixel <= 0) return;
+
+    const radius = user.accuracy / metersPerPixel;
+    if (!Number.isFinite(radius) || radius < 14) return;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, Math.min(radius, Math.hypot(width, height)), 0, Math.PI * 2);
+    ctx.fillStyle = cssVar("--me");
+    ctx.globalAlpha = 0.12;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = cssVar("--me");
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /**
+   * Dibuja el marcador pulsante de la ubicación real del usuario.
    * @param {CanvasRenderingContext2D} ctx - Contexto del canvas.
    * @param {number} width - Ancho del canvas.
    * @param {number} height - Alto del canvas.
    */
   function drawUserMarker(ctx, width, height) {
-    const { me } = getState();
+    const user = getUserLocation();
     const currentView = view;
-    if (!me || !currentView) return;
-    const { x, y } = projectLatLon(me.lat, me.lon, currentView, width, height);
+    if (!user || !currentView || !isWithinBounds(user.lat, user.lon, CITY_BOUNDS)) return;
+
+    const { x, y } = projectLatLon(user.lat, user.lon, currentView, width, height);
     if (x < -40 || y < -40 || x > width + 40 || y > height + 40) return;
+
+    drawAccuracyCircle(ctx, user, x, y, currentView, width, height);
+
     const pulse = (Date.now() % 2000) / 2000;
     ctx.beginPath();
     ctx.arc(x, y, 8 + pulse * 18, 0, Math.PI * 2);
