@@ -1,4 +1,4 @@
-import { CITY, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
+import { CITY, CITY_BOUNDS, GEO_MAX_AGE_MS, GEO_TIMEOUT_MS, STORAGE_KEY } from "./config.js";
 import {
   addSelection,
   clearSelection,
@@ -8,9 +8,11 @@ import {
   setPlaces,
   setReferenceLocation,
   setSelection,
+  setUserLocation,
   toggleSelection,
 } from "./data.js";
 import { Place } from "./entities/Place.js";
+import { isWithinBounds } from "./entities/geo.js";
 import { getCurrentPosition } from "./services/locationService.js";
 import { getAll } from "./services/placesService.js";
 import { renderIcons } from "./services/icons.js";
@@ -71,7 +73,9 @@ async function loadPlaces() {
   setStatus(elements.status, `Cargando puntos de ${CITY.label}…`);
   const { places, center, meta } = await getAll();
   setPlaces(places);
-  setReferenceLocation(center.lat, center.lon, false);
+  if (!getState().me) {
+    setReferenceLocation(center.lat, center.lon);
+  }
   refresh();
   void meta;
   setStatus(elements.status, "");
@@ -79,15 +83,38 @@ async function loadPlaces() {
 
 /** Pide la ubicación al navegador y centra el mapa en ella. */
 async function locateUser() {
+  if (!elements.locate || elements.locate.disabled) return;
+  elements.locate.disabled = true;
+  elements.locate.setAttribute("aria-busy", "true");
   setStatus(elements.status, "Buscando tu ubicación…");
+
   try {
-    const position = await getCurrentPosition({ timeout: GEO_TIMEOUT_MS });
-    setReferenceLocation(position.lat, position.lon, true);
-    map.recenter(position.lat, position.lon);
+    const { lat, lon, accuracy } = await getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: GEO_TIMEOUT_MS,
+      maximumAge: GEO_MAX_AGE_MS,
+    });
+    setUserLocation(lat, lon, accuracy);
+
+    if (!isWithinBounds(lat, lon, CITY_BOUNDS)) {
+      setStatus(
+        elements.status,
+        "Tu ubicación está fuera de Manizales; el mapa sigue centrado en la ciudad.",
+      );
+      return;
+    }
+
+    setReferenceLocation(lat, lon);
+    map.recenter(lat, lon);
     refresh();
-    setStatus(elements.status, "");
+    const accuracyText =
+      Number.isFinite(accuracy) && accuracy > 0 ? ` (precisión ±${Math.round(accuracy)} m)` : "";
+    setStatus(elements.status, `Ubicación actualizada${accuracyText}.`);
   } catch (error) {
     setStatus(elements.status, `No se pudo obtener tu ubicación: ${error.message}`, "error");
+  } finally {
+    elements.locate.disabled = false;
+    elements.locate.removeAttribute("aria-busy");
   }
 }
 

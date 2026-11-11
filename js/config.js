@@ -40,5 +40,6 @@ export const CATEGORY_ICONS = {
 };
 
 export const STORAGE_KEY = "lugares-sel";
-export const GEO_TIMEOUT_MS = 8000;
+export const GEO_TIMEOUT_MS = 10000;
+export const GEO_MAX_AGE_MS = 30000;
 export const MAP_HIT_RADIUS_PX = 14;
